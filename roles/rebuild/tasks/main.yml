@@ -1,0 +1,18 @@
+---
+# tasks for rebuild module
+
+- name: rebuild linode server
+  local_action:
+    module: shell
+    _raw_params: 'python -c "{{ rebuild_linode_cmd }}"'
+
+- name: End here for troubleshooting
+  meta: end_play
+
+- name: update known_hosts
+  local_action:
+    module: shell
+    _raw_params: "ssh-keygen -f '/home/dan/.ssh/known_hosts' -R '{{ ansible_host }}'"
+
+- name: Wait for system to become reachable
+  wait_for_connection:

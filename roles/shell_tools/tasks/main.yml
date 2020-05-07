@@ -1,0 +1,15 @@
+---
+# tasks file for shell_tools
+- name: Install shell Tools
+  apt:
+    pkg: ['ansible', 'aptitude', 'curl', 'git', 'htop', 'net-tools', 'python3', 'whois', 'python3-pip']
+    state: present
+    update_cache: true
+  tags:
+    - shell
+
+- name: install linode-cli tool
+  pip:
+    name: linode-cli
+  tags:
+    - shell

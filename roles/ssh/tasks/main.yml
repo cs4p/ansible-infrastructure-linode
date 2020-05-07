@@ -1,0 +1,15 @@
+---
+- name: Set SSHD Configuration
+  template:
+    src: "files/sshd_config.j2"
+    dest: "/etc/ssh/sshd_config"
+    owner: root
+    group: root
+    mode: 664
+  notify:
+    - Restart SSHD
+
+- name: Allow SSH through the Firewall
+  ufw:
+    rule: allow
+    app: OpenSSH

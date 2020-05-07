@@ -1,0 +1,27 @@
+rebuild:
+  hosts:
+    cs4p:
+new:
+  hosts:
+  children:
+    rebuild:
+app:
+  hosts:
+workstation:
+shell:
+  hosts:
+db-postgresql:
+  hosts:
+db-mysql:
+  hosts:
+    # mysqlServer:
+webserver:
+  hosts:
+    cs4p:
+  children:
+    wordpresss:
+wordpress:
+  hosts:
+    # cybersecurityforparents:
+    # chocolateorgarlic:
+    # amaroscience:

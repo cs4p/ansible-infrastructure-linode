@@ -1,0 +1,25 @@
+---
+- name: wait for boot
+  hosts: all
+  become: true
+  tasks:
+    - name: await boot
+      command: wait-for-boot
+      changed_when: false
+
+- name: build
+  hosts: all
+  roles:
+    - role: default
+      python_user: container
+      python_version: 3.7.2
+
+- name: test
+  hosts: all
+  roles:
+    - role: naftulikay.degoss
+      goss_file: goss.yml
+      goss_addtl_dirs: [goss.d]
+      goss_variables:
+        python_user: container
+        python_version: 3.7.2

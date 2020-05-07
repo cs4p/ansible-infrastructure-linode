@@ -1,0 +1,29 @@
+---
+# tasks file for wordpress
+
+- name: Download and unpack latest WordPress
+  unarchive:
+    src: https://wordpress.org/latest.tar.gz
+    dest: "/var/www/"
+    remote_src: yes
+    creates: "/var/www/wordpress"
+
+- name: Copy wordpress files to new site
+  copy:
+    remote_src: yes
+    src: "/var/www/wordpress/"
+    dest: "/var/www/{{ mysql_db }}"
+
+- name: Set ownership
+  file:
+    path: "/var/www/{{ mysql_db }}"
+    state: directory
+    recurse: yes
+    owner: www-data
+    group: www-data
+
+- name: Set permissions for directories
+  shell: "/usr/bin/find /var/www/{{ mysql_db }}/ -type d -exec chmod 750 {} \\;"
+
+- name: Set permissions for files
+  shell: "/usr/bin/find /var/www/{{ mysql_db }}/ -type f -exec chmod 440 {} \\;"

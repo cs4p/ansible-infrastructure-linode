@@ -1,0 +1,30 @@
+---
+python_build_packages:
+  # python build dependencies
+  - python
+  - python-dev
+  - python3
+  - python3-dev
+  - make
+  - gcc
+  - python-pip
+  - python3-pip
+  - build-essential
+  - libssl-dev
+  - zlib1g-dev
+  - libbz2-dev
+  - libreadline-dev
+  - libsqlite0-dev
+  - libsqlite3-dev
+  - wget
+  - curl
+  - llvm
+  - libncurses5-dev
+  - libncursesw5-dev
+  - xz-utils
+  - tk-dev
+  - git
+  - libffi-dev
+  - libxml2-dev
+  - libxslt1-dev
+  - libyaml-dev

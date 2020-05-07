@@ -1,0 +1,22 @@
+---
+# tasks file for workstation
+- name: Install libreoffice
+  apt: pkg=libreoffice state=present update_cache=yes
+
+# Install snap modules
+- name: Install PYcharm
+  snap:
+    name: pycharm-professional
+    classic: yes
+    state: present
+
+- name: Install slack
+  snap:
+    name: slack
+    classic: yes
+    state: present
+
+- name: Install GIMP
+  snap:
+    name: gimp
+    state: present

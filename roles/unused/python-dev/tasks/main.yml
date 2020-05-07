@@ -1,0 +1,19 @@
+---
+- name: fail when python user is not defined
+  fail: msg="The python_user variable must be set."
+  when: (python_user is not defined) or (not python_user)
+
+- name: fail when python version is not defined
+  fail: msg="The python_version variable must be set."
+  when: (python_version is not defined) or (not python_version)
+
+- name: execute tasks
+  include_tasks: "{{ include_task_item }}"
+  loop:
+    - include/00-facts.yml
+    - include/10-apt-refresh.yml
+    - include/20-packages.yml
+    - include/30-pyenv.yml
+    - include/40-python.yml
+  loop_control:
+    loop_var: include_task_item

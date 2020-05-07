@@ -1,0 +1,26 @@
+---
+python_build_packages:
+  # python build dependencies
+  - python
+  - python-devel
+  - python34
+  - python34-devel
+  - make
+  - gcc
+  - python2-pip
+  - python34-pip
+  - zlib-devel
+  - bzip2
+  - bzip2-devel
+  - readline-devel
+  - sqlite
+  - sqlite-devel
+  - openssl-devel
+  - xz
+  - xz-devel
+  - git
+  - patch
+  - libffi-devel
+  - libxml2-devel
+  - libxslt-devel
+  - libyaml-devel

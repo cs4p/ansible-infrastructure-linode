@@ -1,0 +1,62 @@
+---
+- hosts: rebuild
+  user: root
+  gather_facts: no
+
+  roles:
+   - rebuild
+
+- hosts: new
+  user: root
+
+  roles:
+   - user
+
+- hosts: all
+  become: yes
+  user: root
+
+  roles:
+   - base
+   - fail2ban
+   - firewall
+   - ssh
+   - user
+   - bash
+
+- hosts: db-mysql
+  become: yes
+  roles:
+    - role: mysql
+
+- hosts: db-postgresql
+  become: yes
+
+  roles:
+    - postgresql
+
+- hosts: workstation
+  become: yes
+
+  roles:
+    - workstation
+    - googlechrome
+
+- hosts: shell
+  become: yes
+
+  roles:
+    - shell_tools
+
+
+- hosts: webserver
+  become: yes
+
+  roles:
+    - apache
+
+- hosts: wordpress
+  become: yes
+
+  roles:
+    - wordpress

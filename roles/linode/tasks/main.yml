@@ -1,0 +1,15 @@
+- name: Ensure a running server (create if missing)
+  linode:
+     api_key: 'c2bcf6db79cddbde146aa52137737adbd9b4e62ddb0645a580ea5e282827f823'
+     name: "{{ domain_name }}"
+     plan: 1
+     datacenter: 2
+     distribution: 99
+     password: 'D0ntpanic!'
+     ssh_pub_key: 'rsa_dan'
+     swap: 768
+     wait: yes
+     wait_timeout: 600
+     state: present
+  delegate_to: localhost
+  register: linode_creation

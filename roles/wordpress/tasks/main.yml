@@ -1,0 +1,75 @@
+---
+# tasks file for wordpress
+#########################################################
+# DO Community Playbooks: Wordpress on Ubuntu 18.04 LAMP
+#########################################################
+
+- name: Install MySQL Packages
+  apt:
+    pkg: ['libmysqlclient-dev', 'python3-mysqldb', 'python3-pymysql', 'python3-pip', 'python3-dev', 'mysql-client-core-5.7']
+    state: present
+    update_cache: true
+
+- name: Install the Python MySQLB module
+  pip:
+    name: PyMySQL
+
+- name: Install PHP Extensions
+  apt:
+    pkg: ['php', 'php-mysql', 'libapache2-mod-php', 'php-curl', 'php-gd', 'php-gmp', 'php-mbstring', 'php-xml', 'php-xmlrpc', 'php-soap', 'php-intl', 'php-zip' ]
+    update_cache: yes
+    state: latest
+
+- name: Enable rewrite module
+  shell: /usr/sbin/a2enmod rewrite
+  notify: Reload Apache
+
+- name: update firewall on DB server
+  ufw:
+    comment: "Rule added for {{ mysql_db }}"
+    rule: "allow"
+    from_ip: "{{ private_ip }}"
+    to_ip: "{{ mysql_server }}"
+    to_port: "3306"
+    proto: "tcp"
+  delegate_to: "{{ mysql_server_ssh }}"
+
+- name: Create a new database
+  delegate_to: "{{ mysql_server_ssh }}"
+  mysql_db:
+    name: "{{ mysql_db }}"
+    state: present
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+
+- name: Create MySQL user for WordPress
+  delegate_to: "{{ mysql_server_ssh }}"
+  mysql_user:
+    name: "{{ mysql_db }}"
+    host: "{{ private_ip }}"
+    password: "{{ mysql_user_password }}"
+    priv: "{{ mysql_db }}.*:ALL"
+    state: present
+    check_implicit_admin: yes
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+
+- name: Create backup director on sqlServer
+  delegate_to: "{{ mysql_server_ssh }}"
+  file:
+    path: "/var/local/wp_backups/{{ mysql_db }}"
+    state: directory
+    mode: '0733'
+
+- name: Include restore_site Tasks
+  include: roles/wordpress/tasks/restore_site.yml
+  delegate_to: "{{ mysql_server_ssh }}"
+
+# WordPress Configuration
+
+- name: Set up wp-config
+  template:
+    src: "files/wp-config.php.j2"
+    dest: "/var/www/{{ mysql_db }}/wp-config.php"

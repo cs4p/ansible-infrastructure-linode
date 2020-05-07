@@ -1,0 +1,14 @@
+---
+- hosts: rebuild
+  user: root
+  gather_facts: no
+
+  roles:
+   - rebuild
+
+- hosts: new
+  user: root
+
+  roles:
+   - user
+

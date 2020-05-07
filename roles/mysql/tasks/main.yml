@@ -1,0 +1,61 @@
+---
+# tasks file for mysql
+
+- name: Install MySQL Packages
+  apt:
+    pkg: ['mysql-server', 'libmysqlclient-dev', 'python3-mysqldb', 'python3-pip', 'python3-dev']
+    state: present
+    update_cache: true
+
+- name: Install the Python MySQLB module
+  pip:
+    name: PyMySQL
+
+# MySQL Configuration
+- name: Copy mysqld.cnf
+  template:
+    src: "files/mysqld.cnf.j2"
+    dest: "/etc/mysql/mysql.conf.d/mysqld.cnf"
+  notify:
+    - Restart mysql
+
+- name: Set the root password
+  #ignore_errors: yes
+  mysql_user:
+    name: root
+    host_all: yes
+    check_implicit_admin: yes
+    password: "{{ mysql_root_password }}"
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+
+
+- name: Create dbAdmin account
+  mysql_user:
+    name: dbAdmin
+    check_implicit_admin: yes
+    password: "{{ mysql_root_password }}"
+    state: present
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+
+- name: Remove all anonymous user accounts
+  mysql_user:
+    name: ''
+    host_all: yes
+    check_implicit_admin: yes
+    state: absent
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+
+
+- name: Remove the MySQL test database
+  mysql_db:
+    name: test
+    state: absent
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+    login_user: root
+    login_password: "{{ mysql_root_password }}"

@@ -1,0 +1,24 @@
+---
+# tasks file for wordpress
+
+- name: copy backup file from mysqlServer
+  delegate_to: "{{ mysql_server_ssh }}"
+  synchronize:
+    mode: pull
+    src: /var/local/wp_backups/{{ mysql_db }}
+    dest: /var/www/{{ mysql_db }}
+
+
+- name: Set ownership
+  file:
+    path: "/var/www/{{ mysql_db }}"
+    state: directory
+    recurse: yes
+    owner: www-data
+    group: www-data
+
+- name: Set permissions for directories
+  shell: "/usr/bin/find /var/www/{{ mysql_db }}/ -type d -exec chmod 750 {} \\;"
+
+- name: Set permissions for files
+  shell: "/usr/bin/find /var/www/{{ mysql_db }}/ -type f -exec chmod 440 {} \\;"

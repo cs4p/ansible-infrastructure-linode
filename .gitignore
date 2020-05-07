@@ -1,0 +1,10 @@
+.DS_Store
+.idea
+._*
+!/group_vars/readme.md
+group_vars/
+host_vars/
+output/
+scripts/__pycache__/
+venv/
+

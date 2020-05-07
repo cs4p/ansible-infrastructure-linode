@@ -1,0 +1,40 @@
+---
+
+- name: Gather Facts
+  setup:
+  register: result
+  retries: 3
+  delay: 30
+  until: result is not failed
+
+- name: Create User
+  user: name="{{ user }}" password="{{ hashed_password }}" groups=sudo append=yes shell=/bin/bash
+
+- name: Add Authorized Key
+  authorized_key: user="{{ user }}"
+                  key="{{ ssh_public_key }}"
+                  state=present
+
+#- name: Create Dan User
+#  user: name=dan password={{dan_password}} groups=sudo,www-data append=yes shell=/bin/bash
+#
+#- name: Add dan Authorized Key
+#  authorized_key: user=dan
+#                  key="{{ dan_public_key }}"
+#                  state=present
+
+#- name: Create nessus User
+#  user: name=nessus password={{nessus_password}} groups=sudo append=yes shell=/bin/bash
+#
+#- name: Add nessus Authorized Key
+#  authorized_key: user=nessus
+#                  key="{{ nessus_public_key }}"
+#                  state=present
+
+#- name: Create duplicatorprobackup User
+#  user: name=duplicatorprobackup password={{duplicatorprobackup_password_hash}} shell=/bin/bash
+#
+#- name: Add nessus Authorized Key
+#  authorized_key: user=nessus
+#                  key="{{ nessus_public_key }}"
+#                  state=present

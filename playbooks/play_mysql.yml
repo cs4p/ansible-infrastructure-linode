@@ -1,0 +1,9 @@
+---
+- hosts: all
+  become: yes
+  user: dan
+
+- hosts: db-mysql
+
+  roles:
+    - mysql

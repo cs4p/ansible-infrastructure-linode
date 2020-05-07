@@ -1,0 +1,10 @@
+---
+# Enable UFW Firewall.  Rules are defined in specific modules.
+
+- name: enable UFW
+  ufw:
+    state: enabled
+
+- name: Set logging
+  ufw:
+    logging: 'on'

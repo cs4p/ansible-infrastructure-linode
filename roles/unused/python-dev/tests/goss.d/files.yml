@@ -1,0 +1,20 @@
+---
+file:
+  '/etc/profile.d/pyenv.sh':
+    exists: true
+    contains:
+      # check for pyenv root being set
+      - /export PYENV_ROOT=\"\$HOME/\.pyenv\"/
+      # check for path modifications
+      - /\$PYENV_ROOT\/bin/
+      - /\$PYENV_ROOT\/shims/
+      # check for init
+      - /\$\(pyenv init \-\)/
+
+  '/home/{{.Vars.python_user}}/.pyenv':
+    exists: true
+
+  '/home/{{.Vars.python_user}}/.pyenv/version':
+    exists: true
+    contains:
+      - "{{.Vars.python_version}}"

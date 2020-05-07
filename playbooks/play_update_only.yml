@@ -1,0 +1,12 @@
+---
+- hosts: all
+  become: yes
+  user: dan
+
+  roles:
+   - base
+   - fail2ban
+   - firewall
+   - ssh
+   - user
+   - bash

@@ -1,0 +1,7 @@
+---
+# tasks file for bash
+- name: Add bashrc file
+  copy: src=bash_aliases dest=/home/dan/.bashrc owner=dan group=dan
+
+- name: Add bash_aliases file
+  copy: src=bash_aliases dest=/home/dan/.bash_aliases owner=dan group=dan

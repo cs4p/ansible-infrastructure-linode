@@ -1,0 +1,26 @@
+---
+- name: fetch pyenv installer
+  uri:
+    url: https://raw.githubusercontent.com/pyenv/pyenv-installer/master/bin/pyenv-installer
+    method: GET
+    status_code: 200
+    return_content: true
+  register: pyenv_installer_response
+  when: not pyenv_installed
+
+- name: install pyenv as the user
+  command: sh -s -- -y
+  args:
+    stdin: "{{ pyenv_installer_response.content }}"
+  become: true
+  become_user: "{{ python_user }}"
+  when: not pyenv_installed
+
+- name: install profile script
+  template:
+    src: pyenv.sh.j2
+    dest: /etc/profile.d/pyenv.sh
+    owner: root
+    group: root
+    mode: "0755"
+  become: true

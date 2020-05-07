@@ -1,0 +1,21 @@
+---
+galaxy_info:
+  name: python-dev
+  src: naftulikay.python-dev
+  author: Naftuli Kay
+  description: Install and configure a Python development environment on a system.
+
+  license: MIT
+
+  min_ansible_version: 2.4
+
+  platforms:
+    - name: EL
+      versions: [7]
+    - name: Ubuntu
+      versions: [trusty, xenial]
+
+  galaxy_tags: [python]
+
+dependencies:
+  - role: naftulikay.base
