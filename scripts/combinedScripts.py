@@ -1,9 +1,8 @@
-import linode_api4 as linode_api
 import crypt
 import random
 import string
-
-from Crypto.PublicKey import RSA
+import subprocess
+import linode_api4 as linode_api
 
 pathToProject = '/Users/dan/PycharmProjects/ansible-infrastructure'
 
@@ -16,7 +15,6 @@ def createClient():
 def updateInventory(linodeAPIclient):
     my_linodes = linodeAPIclient.linode.instances()
 
-    linode_dct = {}
     nessus_list = []
     # erase all output files
     filesList = ['/output/ssh_linodes_config', '/output/hosts_file', '/output/nessus.txt', '/group_vars/all.yml']
@@ -24,65 +22,76 @@ def updateInventory(linodeAPIclient):
         open(pathToProject+file, 'w').close()
 
     for current_linode in my_linodes:
-        print("creating "+current_linode.label)
-        linode_dct["linode_id"] = str(current_linode.id)
-        linode_dct["domain_name"] = current_linode.label
-        linode_dct["ansible_host"] = current_linode.ips.ipv4.public[0].address
-        linode_dct["private_ip"] = current_linode.ips.ipv4.private[0].address
-        # this assumes you have no linodes with labels that differ only after the last "."
-        userName = current_linode.label[:current_linode.label.rfind('.')]
-        user_info = createAccount(userName, pathToProject+'/output/ssh_keys/' + userName)
-        linode_dct["user"] = user_info["user"]
-        linode_dct["password"] = user_info["password"]
-        linode_dct["hashed_password"] = user_info["hashed_password"]
-        linode_dct["ssh_public_key"] = user_info["ssh_public_key"]
-        # create credentials for root account
-        user_info = createAccount('root', pathToProject+'/output/ssh_keys/' + userName + '_root')
-        linode_dct["root_user"] = user_info["user"]
-        linode_dct["root_password"] = user_info["password"]
-        linode_dct["root_hashed_password"] = user_info["hashed_password"]
-        linode_dct["root_ssh_public_key"] = user_info["ssh_public_key"]
-        linode_dct["rebuild_linode_cmd"] = "import scripts.combinedScripts as s;s.rebuildLinode('"+linode_dct["linode_id"]+"','"+linode_dct["root_hashed_password"]+"')"
-        if 'wordpress' in current_linode.tags:
-            linode_dct["mysql_db"] = linode_dct["user"]
-            linode_dct["mysql_user"] = "wp_" + linode_dct["user"] + "_db_user"
-            linode_dct["mysql_user_password"] = createPassword()
-
-        fd_ansible = open(pathToProject+"/host_vars/" + userName + '.yml', 'w')
-        fd_ssh = open(pathToProject+"/output/ssh_linodes_config", 'a')
-        fd_hosts = open(pathToProject+"/output/hosts_file", 'a')
-
-        # create host_var file
-        for key, value in linode_dct.items():
-#            fd_ansible.write(str(key + ": '" + value + "'\n"))
-            fd_ansible.write(str(key + ': "' + value + '"\n'))
-
-        # Create entries suitable for an ssh config file
-        fd_ssh.write(str("Host " + linode_dct["domain_name"] + '\n'))
-        fd_ssh.write(str("\tHostName " + linode_dct["ansible_host"] + '\n'))
-        fd_ssh.write(str('\tUser ' + linode_dct['user'] + '\n'))
-        fd_ssh.write(str("\tPort 22" + '\n'))
-        fd_ssh.write(str("\tIdentityFile ~/.ssh/" + linode_dct['user'] + '_private.key\n'))
-        fd_ssh.write('\n')
-
-        # Create entries suitable for a host file
-        fd_hosts.write(str(linode_dct["ansible_host"] + '\t' + linode_dct["domain_name"] + '\n'))
-
+        linode_dct = generateSecrets(current_linode.id)
         # csv IP List (for nessus)
         nessus_list.append(str(linode_dct["ansible_host"]))
-
-        # close all the files
-        fd_ansible.close()
-        fd_ssh.close()
-        fd_hosts.close()
-
-        # reset the dictionary
-        linode_dct = {}
 
     # Write csv string to a file and close
     fd_nessus = open(pathToProject+"/output/nessus.txt", 'a')
     fd_nessus.write(",".join(nessus_list))
     fd_nessus.close()
+
+
+def generateSecrets(linodeID):
+    client = createClient()
+    current_linode = client.load(linode_api.Instance, linodeID)
+    linode_dct = {}
+
+    print("Creating new secrets for " + current_linode.label)
+    linode_dct["linode_id"] = str(current_linode.id)
+    linode_dct["domain_name"] = current_linode.label
+    linode_dct["ansible_host"] = current_linode.ips.ipv4.public[0].address
+    linode_dct["private_ip"] = current_linode.ips.ipv4.private[0].address
+    # this assumes you have no linodes with labels that differ only after the last "."
+    userName = current_linode.label[:current_linode.label.rfind('.')]
+    user_info = createAccount(pathToProject + '/output/ssh_keys/' + userName)
+    linode_dct["user"] = userName
+    linode_dct["password"] = user_info["password"]
+    linode_dct["hashed_password"] = user_info["hashed_password"]
+    linode_dct["ssh_public_key"] = user_info["ssh_public_key"]
+    # create credentials for root account
+    user_info = createAccount(pathToProject + '/output/ssh_keys/' + userName + '_root')
+    linode_dct["ansible_ssh_user"] = 'root'
+    linode_dct["root_password"] = user_info["password"]
+    linode_dct["root_hashed_password"] = user_info["hashed_password"]
+    linode_dct["root_ssh_public_key"] = user_info["ssh_public_key"]
+    linode_dct["ansible_ssh_private_key_file"] = pathToProject + "/output/ssh_keys/" + userName + '_root'
+    linode_dct["rebuild_linode_cmd"] = "import scripts.combinedScripts as s;s.rebuildLinode('" + linode_dct[
+        "linode_id"] + "','" + linode_dct["root_hashed_password"] +"','" + pathToProject + "/output/ssh_keys/" + userName + "_root.pub" + "')"
+    linode_dct["new_secrets_for_linode_cmd"] = "import scripts.combinedScripts as s;s.generateSecrets('" + linode_dct[
+        "linode_id"] + "')"
+    if 'wordpress' in current_linode.tags:
+        linode_dct["mysql_db"] = linode_dct["user"]
+        linode_dct["mysql_user"] = "wp_" + linode_dct["user"] + "_db_user"
+        linode_dct["mysql_user_password"] = createPassword()
+
+    fd_ansible = open(pathToProject + "/host_vars/" + userName + '.yml', 'w')
+    fd_ssh = open(pathToProject + "/output/ssh_linodes_config", 'a')
+    fd_hosts = open(pathToProject + "/output/hosts_file", 'a')
+
+    # create host_var file
+    for key, value in linode_dct.items():
+        #            fd_ansible.write(str(key + ": '" + value + "'\n"))
+        fd_ansible.write(str(key + ': "' + value + '"\n'))
+
+    # Create entries suitable for an ssh config file
+    fd_ssh.write(str("Host " + linode_dct["domain_name"] + '\n'))
+    fd_ssh.write(str("\tHostName " + linode_dct["ansible_host"] + '\n'))
+    fd_ssh.write(str('\tUser ' + linode_dct['user'] + '\n'))
+    fd_ssh.write(str("\tPort 22" + '\n'))
+    fd_ssh.write(str("\tIdentityFile ~/.ssh/" + linode_dct['user'] + '\n'))
+    fd_ssh.write('\n')
+
+    # Create entries suitable for a host file
+    fd_hosts.write(str(linode_dct["ansible_host"] + '\t' + linode_dct["domain_name"] + '\n'))
+
+    # close all the files
+    fd_ansible.close()
+    fd_ssh.close()
+    fd_hosts.close()
+
+    # reset the dictionary
+    return linode_dct
 
 
 def createLinode(label, linodeAPIclient):
@@ -110,13 +119,14 @@ def backupLinode(linode_id, linodeAPIclient):
     loaded_linode = linodeAPIclient.load(my_linodes.lists[0][0], linode_id)
 
 
-def rebuildLinode(linode_id, root_pass):
-    linodeAPIclient = createClient()
-    my_linodes = linodeAPIclient.linode.instances()
-    loaded_linode = linodeAPIclient.load(my_linodes.lists[0][0], linode_id)
+def rebuildLinode(linode_id,root_password,authorized_key):
     image = 'linode/ubuntu18.04'
-    loaded_linode.rebuild(image, root_pass)
-    # return root_pass
+    linodeAPIclient = createClient()
+    authorized_key_list = []
+    authorized_key_list.append(authorized_key)
+    loaded_linode = linodeAPIclient.load(linode_api.Instance, linode_id)
+    root_pass = loaded_linode.rebuild(image, root_pass=root_password, authorized_keys=authorized_key_list)
+    return root_pass
 
 
 def testMethod(linode_id, root_pass):
@@ -136,24 +146,18 @@ def hashPassword(password):
     return hashedPassword
 
 
-def createSSH_Key(user, ssh_key_file):
-    key = RSA.generate(2048)
-    pubkey = key.publickey()
-    pubkeyStr = str(pubkey.exportKey('PEM').decode('UTF-8'))
-
-    content_file = open(ssh_key_file + "_private.key", 'wb')
-    content_file.write(key.exportKey('PEM'))
-    content_file.close()
-    content_file = open(ssh_key_file + "_public.key", 'wb')
-    content_file.write(pubkey.exportKey('PEM'))
-    content_file.close()
+def createSSH_Key(ssh_key_file):
+    subprocess.call('ssh-keygen -q -f "' + ssh_key_file + '" -N ""',shell=True)
+    pubkey = open(ssh_key_file + '.pub')
+    pubkeyStr = pubkey.read()
+    pubkey.close()
     return pubkeyStr
 
 
-def createAccount(user, output_file):
-    results = {"user": user, "password": createPassword()}
+def createAccount(output_file):
+    results = {"password": createPassword()}
     results["hashed_password"] = hashPassword(results["password"])
-    results["ssh_public_key"] = createSSH_Key(results["user"], output_file)
+    results["ssh_public_key"] = createSSH_Key(output_file)
     return results
 
 
@@ -171,7 +175,7 @@ def deploy():
     # all hosts need the mysql root password so they can create accounts and databases on shared sql server
     mysql_root_password = createPassword()
     # create an account on all servers for the vulnerability scanner
-    nessus_dict = createAccount('nessus', pathToProject+'/output/ssh_keys/nessus')
+    nessus_dict = createAccount(pathToProject+'/output/ssh_keys/nessus')
     # write everythign to secrets file
     sf = open(secretsFile, 'w')
     sf.write("mysql_root_password: '" + mysql_root_password + "'\n")

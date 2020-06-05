@@ -1,18 +1,25 @@
 ---
 # tasks for rebuild module
+- name: new secrets for linode server
+  local_action:
+    module: shell
+    _raw_params: 'python -c "{{ new_secrets_for_linode_cmd }}"'
+
+- name: refresh facts
+  include_vars:
+    file: "host_vars/{{ user }}.yml"
 
 - name: rebuild linode server
   local_action:
     module: shell
     _raw_params: 'python -c "{{ rebuild_linode_cmd }}"'
 
-- name: End here for troubleshooting
-  meta: end_play
-
-- name: update known_hosts
-  local_action:
-    module: shell
-    _raw_params: "ssh-keygen -f '/home/dan/.ssh/known_hosts' -R '{{ ansible_host }}'"
+#- name: update known_hosts
+#  local_action:
+#    module: shell
+#    _raw_params: "ssh-keygen -f '/Users/dan/.ssh/known_hosts' -R '{{ ansible_host }}'"
 
 - name: Wait for system to become reachable
   wait_for_connection:
+    delay: 30
+    timeout: 180
